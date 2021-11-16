@@ -123,7 +123,8 @@ study_cln
 ```
 
 Spagetti Plot 
-```{r message=FALSE, warning = FALSE}
+
+```{r}
 study_cln%>%
   ggplot(aes(x = week, y = observation_score, group = subject_id, color = subject_id))+geom_line()+facet_wrap(~ arm)+
   theme(axis.text.x = element_text(angle = 45, vjust=0.5, hjust=1))+
