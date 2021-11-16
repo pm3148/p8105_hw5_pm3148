@@ -9,6 +9,7 @@ output: github_document
 #Load Libaries
 library(tidyverse)
 library(viridis)
+library(tools)
 ```
 
 # Problem 1 
@@ -99,22 +100,76 @@ results_df%>%
 ```
 # Problem 2 
 
-```{r}
+```{r message=FALSE, warning = FALSE}
 file_path = "data/study"
 files<-list.files(path = file_path, full.names = FALSE)
 
-files<-
-  files%>%
-  rename(file_name = `list.files(path = file_path, full.names = FALSE)`)
-
 study_cln<-
-  data_frame(filename = files)%>%
+  tibble(filename = files)%>%
   mutate(file_contents = map(filename, ~ read_csv(file.path("data/study", .))),
          arm = str_extract(filename, "con|exp"),
-         subject_id =str_extract(filename, "\\d+"))%>%
+         subject_id =file_path_sans_ext(filename))%>%
   unnest(file_contents)%>%
   select(-filename)%>%
-  relocate(subject_id, arm)
+  relocate(subject_id, arm)%>%
+  pivot_longer(
+    week_1:week_8, 
+    names_to = "week",
+    values_to = "observation_score"
+  )%>%
+  mutate(week = factor(week, levels=c("week_1", "week_2","week_3","week_4","week_5","week_6","week_7","week_8")))
+
+study_cln
+```
+
+Spagetti Plot 
+```{r message=FALSE, warning = FALSE}
+study_cln%>%
+  ggplot(aes(x = week, y = observation_score, group = subject_id, color = subject_id))+geom_line()+facet_wrap(~ arm)+
+  theme(axis.text.x = element_text(angle = 45, vjust=0.5, hjust=1))+
+  scale_color_discrete(name = "Subject ID")+
+  xlab("Week")+
+  ylab("Obervation Score")
+
+```
+
+# Problem 3 
+```{r}
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+```
+Write function to fill in missing values
+```{r}
+fill_in_missing = function(vectorvar){
+  if(is.numeric(vectorvar)){
+    vectorvar = replace_na(vectorvar, mean(vectorvar, na.rm=TRUE))
+  }
+  if(is.character(vectorvar)){
+    vectorvar = replace_na(vectorvar, "virginica")
+  }
+  return(vectorvar)
+}
+
+#Case Numeric - Test
+fill_in_missing(iris_with_missing$Petal.Width)
+
+#Case Character - Test
+fill_in_missing(iris_with_missing$Species)
+```
+
+Apply to entire dataset 
+```{r}
+iris_with_missing%>%
+  map_df(~fill_in_missing(.x))%>%
+summarise_all(funs(sum(is.na(.))))
+
+#No more NAs!
+
+iris_with_missing%>%
+  map_df(~fill_in_missing(.x))
 
 ```
 
