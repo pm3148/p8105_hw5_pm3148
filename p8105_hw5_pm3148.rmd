@@ -12,6 +12,15 @@ library(viridis)
 library(tools)
 ```
 
+```{r}
+knitr::opts_chunk$set(
+  fig.width = 10,
+  fig.asp = .6,
+  out.width = "90%"
+)
+```
+
+
 # Problem 1 
 
 ```{r}
@@ -61,7 +70,8 @@ homicide_cln%>%
   summarize(
     unsolved = sum(resolution=="unsolved"),
     n=n()
-  )
+  )%>%
+  knitr::kable()
 
 ```
 
@@ -84,7 +94,7 @@ prop_test_function<-function(city_df){
 prop_test_function(baltimore_df)
 ```
 
-#Iterate over entire dataset
+# Iterate over entire dataset
 ```{r}
 nested_df<-
   homicide_cln%>%
@@ -117,6 +127,7 @@ results_df%>%
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high))+
   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1))+xlab("City,State")+ylab("Proportion Estimate")
 ```
+
 # Problem 2 
 
 ```{r message=FALSE, warning = FALSE}
@@ -152,7 +163,10 @@ study_cln%>%
   ylab("Obervation Score")
 
 ```
+
 Subjects in the participant group tend to have a positive linear trend in regards to their observation scores, where the observation scores are increasing over time. However, in the control group there does not seem to be an increasing trend. It looks like, for many of the subjects, if we were to add a trend line it would likely be with a slope that is close to 0. 
+
+
 # Problem 3 
 ```{r}
 set.seed(10)
