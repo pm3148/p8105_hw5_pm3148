@@ -28,6 +28,14 @@ homicide_cln<-homicide%>%
 
 ```
 
+# Describe Data 
+```{r}
+
+nrow(homicide_cln)
+ncol(homicide_cln)
+```
+The homicide dataset is composed of `r nrow(homicide_cln)` variables and `r ncol(homicide_cln)` observations. Some interesting variables include city, state, and disposition, the outcome of the homicide investigation. 
+
 ```{r}
 baltimore_df<- homicide_cln%>%
  filter(city_state=="Baltimore,MD")
@@ -46,6 +54,17 @@ baltimore_test<-prop.test(
 baltimore_test%>%
   broom::tidy()
 ```
+Total Number of Homicides and Number of Unresolved Homicides per City 
+```{r}
+homicide_cln%>%
+  group_by(city_state)%>%
+  summarize(
+    unsolved = sum(resolution=="unsolved"),
+    n=n()
+  )
+
+```
+
 # Create prop test function
 ```{r}
 prop_test_function<-function(city_df){
@@ -133,7 +152,7 @@ study_cln%>%
   ylab("Obervation Score")
 
 ```
-
+Subjects in the participant group tend to have a positive linear trend in regards to their observation scores, where the observation scores are increasing over time. However, in the control group there does not seem to be an increasing trend. It looks like, for many of the subjects, if we were to add a trend line it would likely be with a slope that is close to 0. 
 # Problem 3 
 ```{r}
 set.seed(10)
