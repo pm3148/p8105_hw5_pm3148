@@ -27,6 +27,7 @@ knitr::opts_chunk$set(
 #Load Data
 homicide<- read_csv("data/homicide-data.csv", na = c("", "Unknown"))
 
+#Describe the raw data. Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
 homicide_cln<-homicide%>%
   mutate(city_state = str_c(city, ",", state),
          resolution = case_when(disposition=="Closed without arrest" ~ "unsolved", 
@@ -43,9 +44,12 @@ homicide_cln<-homicide%>%
 nrow(homicide_cln)
 ncol(homicide_cln)
 ```
-The homicide dataset is composed of `r nrow(homicide_cln)` variables and `r ncol(homicide_cln)` observations. Some interesting variables include city, state, and disposition, the outcome of the homicide investigation. 
+The homicide dataset is composed of `r nrow(homicide_cln)` variables and `r ncol(homicide_cln)` observations. Some interesting variables include city, state, and disposition, the outcome of the homicide investigation. The raw data included values with empty spaces and "Unknown" so those values were replaced with NAs to make data cleaner. 
+
 
 ```{r}
+#For the city of Baltimore, MD, use the prop.test function to estimate the proportion of homicides that are unsolved; save the output of prop.test as an R object, apply the broom::tidy to this object and pull the estimated proportion and confidence intervals from the resulting tidy dataframe.
+
 baltimore_df<- homicide_cln%>%
  filter(city_state=="Baltimore,MD")
 
@@ -61,7 +65,8 @@ baltimore_test<-prop.test(
           )
 
 baltimore_test%>%
-  broom::tidy()
+  broom::tidy()%>%
+  knitr::kable()
 ```
 Total Number of Homicides and Number of Unresolved Homicides per City 
 ```{r}
@@ -115,6 +120,9 @@ results_df<-
   unnest(tidy_results)%>%
   select(city_state, estimate, starts_with("conf"))
 
+#Final Tidy Dataframe with Estimated Proportions and CI for each City
+results_df%>%
+  knitr::kable()
 
 ```
 
@@ -147,34 +155,50 @@ study_cln<-
     names_to = "week",
     values_to = "observation_score"
   )%>%
-  mutate(week = factor(week, levels=c("week_1", "week_2","week_3","week_4","week_5","week_6","week_7","week_8")))
+  mutate(
+         week = replace(week, week == "week_1", "Week 1"),
+         week = replace(week, week == "week_2", "Week 2"),
+         week = replace(week, week == "week_3", "Week 3"),
+         week = replace(week, week == "week_4", "Week 4"),
+         week = replace(week, week == "week_5", "Week 5"),
+         week = replace(week, week == "week_6", "Week 6"),
+         week = replace(week, week == "week_7", "Week 7"),
+         week = replace(week, week == "week_8", "Week 8"),
+         week = factor(week, levels=c("Week 1", "Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Week 8")),
+         arm = replace(arm, arm=="con", "Control"), 
+         arm = replace(arm, arm=="exp", "Experimental"))
 
-study_cln
+study_cln%>%
+  knitr::kable()
 ```
 
 Spagetti Plot 
 
 ```{r}
+#Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 study_cln%>%
   ggplot(aes(x = week, y = observation_score, group = subject_id, color = subject_id))+geom_line()+facet_wrap(~ arm)+
   theme(axis.text.x = element_text(angle = 45, vjust=0.5, hjust=1))+
   scale_color_discrete(name = "Subject ID")+
   xlab("Week")+
-  ylab("Obervation Score")
+  ylab("Obervation Score") +
+  ggtitle("Observation Scores By Week")
 
 ```
 
-Subjects in the participant group tend to have a positive linear trend in regards to their observation scores, where the observation scores are increasing over time. However, in the control group there does not seem to be an increasing trend. It looks like, for many of the subjects, if we were to add a trend line it would likely be with a slope that is close to 0. 
+Subjects in the experimental group tend to have a positive linear trend in regards to their observation scores, where the observation scores are increasing over time. However, in the control group there does not seem to be a clear trend. It looks like, for many of the subjects, if we were to add a trend line it would likely be with a slope that is close to 0, indicating that the control procedure does not have any effect on observation score. 
 
 
 # Problem 3 
 ```{r}
+#Set up for data set with NAs
 set.seed(10)
 
 iris_with_missing = iris %>% 
   map_df(~replace(.x, sample(1:150, 20), NA)) %>%
   mutate(Species = as.character(Species))
 ```
+
 Write function to fill in missing values
 ```{r}
 fill_in_missing = function(vectorvar){
@@ -200,10 +224,13 @@ iris_with_missing%>%
   map_df(~fill_in_missing(.x))%>%
 summarise_all(funs(sum(is.na(.))))
 
-#No more NAs!
+#No more NAs in all columns
 
-iris_with_missing%>%
+iris_no_na<- iris_with_missing%>%
   map_df(~fill_in_missing(.x))
+
+iris_no_na%>%
+  knitr::kable()
 
 ```
 
